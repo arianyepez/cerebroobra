@@ -1,88 +1,86 @@
 import streamlit as st
 
-st.set_page_config(page_title="Cerebro de Obra MAESTRO - Adrián Yépez", layout="wide")
+st.set_page_config(page_title="Cerebro de Obra TOTAL - Adrián Yépez", layout="wide")
 
-st.title("🏗️ Cerebro de Obra: Presupuesto Personalizado")
-st.write("Configura el tipo de construcción, techado y acabados.")
+st.title("🏗️ Cerebro de Obra: Presupuesto Global Maestro")
+st.write("Cálculos desde fundaciones hasta acabados, plomería y electricidad.")
 
-# --- BARRA LATERAL: MEDIDAS Y OPCIONES ---
-st.sidebar.header("📏 Medidas de la Obra")
+# --- BARRA LATERAL: MEDIDAS, PUNTOS Y PRECIOS ---
+st.sidebar.header("📏 Medidas y Puntos")
 largo = st.sidebar.number_input("Largo (m)", min_value=1.0, value=6.0)
 ancho = st.sidebar.number_input("Ancho (m)", min_value=1.0, value=4.0)
 alto = st.sidebar.number_input("Alto Pared (m)", min_value=1.0, value=2.6)
-
-st.sidebar.header("🏗️ Opciones de Construcción")
-tipo_estructura = st.sidebar.selectbox("Estructura (Vigas/Columnas)", ["Tubos Estructurales (Hierro)", "Vigas de Concreto Vaciado"])
-tipo_techo = st.sidebar.selectbox("Tipo de Cobertura", ["Acerolit / Zinc", "Platabanda (Losa de Concreto)"])
+n_puertas = st.sidebar.number_input("Puertas", min_value=0, value=1)
+n_ventanas = st.sidebar.number_input("Ventanas", min_value=0, value=2)
 n_banos = st.sidebar.number_input("Número de Baños", min_value=0, value=1)
+n_puntos_elec = st.sidebar.number_input("Puntos Eléctricos", min_value=1, value=10)
 
 st.sidebar.header("💰 Precios Actuales ($)")
-p_cemento = st.sidebar.number_input("Saco Cemento", value=8.5)
-p_bloque = st.sidebar.number_input("Bloque 15cm", value=0.65)
-p_tubo = st.sidebar.number_input("Tubo Estructural (6m)", value=25.0)
-p_techo_lam = st.sidebar.number_input("Lámina Techo / m2", value=18.0)
+p_cemento = st.sidebar.number_input("Saco Cemento", value=8.0)
+p_bloque = st.sidebar.number_input("Bloque 15cm", value=0.60)
 p_cabilla = st.sidebar.number_input("Cabilla 1/2\"", value=10.5)
-p_bano_kit = st.sidebar.number_input("Kit Baño (Piezas/Tubos)", value=180.0)
+p_tubo_est = st.sidebar.number_input("Tubo Estructural (6m)", value=25.0)
+p_techo = st.sidebar.number_input("Lámina Techo (3.6m)", value=18.0)
+p_combo_bano = st.sidebar.number_input("Combo Poceta/Lavamanos", value=120.0)
+p_tuberia_plom = st.sidebar.number_input("Kit Tubería por Baño", value=60.0)
 
-# --- LÓGICA DE CÁLCULO ---
-perimetro = (largo + ancho) * 2
+# --- CÁLCULOS TÉCNICOS ---
 area_piso = largo * ancho
-area_paredes = (perimetro * alto) - 5 # Descuento estándar puertas/ventanas
+perimetro = (largo + ancho) * 2
+# Descuento exacto de vanos
+area_paredes = (perimetro * alto) - (n_puertas * 1.89) - (n_ventanas * 1.20)
 
-# 1. Albañilería Base
+# 1. Albañilería y Fundaciones
 total_bloques = round(area_paredes * 12.5)
-cem_paredes = round(total_bloques / 45)
+# Detalle de cemento: Pegar bloques + Fundaciones + Riostras + Piso base
+cem_asentado = round(total_bloques / 45)
+n_columnas = round(perimetro / 3) + 1
+cem_fundaciones = round(n_columnas * 1.2)
+cem_riostras = round(perimetro * 0.4)
+cem_total = cem_asentado + cem_fundaciones + cem_riostras + round(area_piso * 0.15)
 
-# 2. Estructura Seleccionada
-cem_extra = 0
-hierro_extra = 0
-tubos_extra = 0
+# 2. Estructura y Techo
+hierro_fundaciones = round(n_columnas * 1.5) # Cabillas para zapatas y pedestales
+area_techo = (largo + 0.5) * (ancho + 0.5)
+n_laminas = round(area_techo / 3)
+n_tubos = round((largo / 1.0) * (ancho / 6) + (ancho * 2 / 6))
 
-if tipo_estructura == "Vigas de Concreto Vaciado":
-    # Cálculo para vigas de corona y riostras
-    cem_extra += round(perimetro * 0.6) 
-    hierro_extra += round(perimetro * 0.8) 
-else:
-    # Cálculo para correas de hierro
-    tubos_extra += round(perimetro / 2) 
-
-# 3. Techo Seleccionado
-costo_techo_mat = 0
-if tipo_techo == "Platabanda (Losa de Concreto)":
-    cem_extra += round(area_piso * 0.8)
-    hierro_extra += round(area_piso / 2)
-    costo_techo_mat = area_piso * 15 # Malla truck, puntales, etc.
-else:
-    costo_techo_mat = area_piso * p_techo_lam
+# 3. Plomería y Electricidad
+costo_piezas = n_banos * p_combo_bano
+costo_tuberia_bano = n_banos * p_tuberia_plom
+costo_elec = n_puntos_elec * 12.0 # Promedio de material por punto (tubo/caja/cable)
 
 # --- PANTALLA PRINCIPAL ---
 col1, col2 = st.columns(2)
 
 with col1:
     st.header("📋 Lista de Materiales")
-    st.info(f"🧱 *Bloques:* {total_bloques} unidades")
-    st.info(f"🛒 *Cemento:* {cem_paredes + cem_extra} sacos totales")
-    st.info(f"🏗️ *Hierro:* {hierro_extra} cabillas y {tubos_extra} tubos")
-    st.info(f"🚿 *Baños:* {n_banos} kit(s) de plomería y piezas")
+    st.info(f"🧱 *Albañilería:* {total_bloques} bloques, {cem_total} sacos cemento (incluye riostras).")
+    st.info(f"🏗️ *Hierro Base:* {hierro_fundaciones} cabillas para fundaciones y columnas.")
+    st.info(f"🏠 *Techo:* {n_laminas} láminas, {n_tubos} tubos estructurales.")
+    st.info(f"🚿 *Plomería:* {n_banos} Kit(s) de piezas sanitarias y tuberías.")
+    st.info(f"⚡ *Electricidad:* {n_puntos_elec} puntos con tubería y cableado.")
 
 with col2:
     st.header("💵 Presupuesto Estimado ($)")
-    c_bloque = total_bloques * p_bloque
-    c_cemento = (cem_paredes + cem_extra) * p_cemento
-    c_hierro = (hierro_extra * p_cabilla) + (tubos_extra * p_tubo)
-    c_bano = n_banos * p_bano_kit
+    c_gris = (total_bloques * p_bloque) + (cem_total * p_cemento) + (hierro_fundaciones * p_cabilla)
+    c_techo = (n_laminas * p_techo) + (n_tubos * p_tubo_est)
+    c_plomeria = costo_piezas + costo_tuberia_bano
     
-    total_gral = c_bloque + c_cemento + c_hierro + c_bano + costo_techo_mat
+    st.write(f"Obra Gris y Hierro: *${c_gris:.2f}*")
+    st.write(f"Techo y Estructura: *${c_techo:.2f}*")
+    st.write(f"Baños y Plomería: *${c_plomeria:.2f}*")
+    st.write(f"Instalación Eléctrica: *${costo_elec:.2f}*")
     
-    st.write(f"Paredes y Bloques: *${c_bloque:.2f}*")
-    st.write(f"Cemento Total: *${c_cemento:.2f}*")
-    st.write(f"Estructura y Hierro: *${c_hierro:.2f}*")
-    st.write(f"Techo Seleccionado: *${costo_techo_mat:.2f}*")
-    st.write(f"Baños y Plomería: *${c_bano:.2f}*")
-    
-    st.success(f"### TOTAL ESTIMADO: ${total_gral:.2f}")
+    total = c_gris + c_techo + c_plomeria + costo_elec + 100 # 100 para imprevistos
+    st.success(f"### TOTAL ESTIMADO: ${total:.2f}")
 
-with st.expander("🔍 Detalle de la Configuración Seleccionada"):
-    st.write(f"*Estructura:* Has seleccionado {tipo_estructura}. Esto ajusta la cantidad de cemento y acero.")
-    st.write(f"*Techo:* El presupuesto para {tipo_techo} incluye materiales base para su instalación.")
-    st.write(f"*Electricidad:* Se estima un kit básico de tubería y cableado para {area_piso} m2.")
+# --- DESGLOSE FINAL ---
+with st.expander("🔍 Detalle Técnico de la Obra"):
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.write("*Desglose de Cemento:*")
+        st.write(f"- Pegar bloques: {cem_asentado} sacos")
+        st.write(f"- Fundaciones/Zapatas: {cem_fundaciones} sacos")
+        st.write(f"- Vigas de Riostra: {cem_riostras} sacos")
+        st.write(f"- Piso base: {round(area_piso * 0.15)
