@@ -12,7 +12,7 @@ ancho = st.sidebar.number_input("Ancho (m)", min_value=1.0, value=4.0)
 alto = st.sidebar.number_input("Alto Pared (m)", min_value=1.0, value=2.6)
 
 st.sidebar.header("🏗️ Opciones de Construcción")
-tipo_estructura = st.sidebar.selectbox("Estructura de Techo", ["Tubos Estructurales (Hierro)", "Vigas de Concreto Vaciado"])
+tipo_estructura = st.sidebar.selectbox("Estructura (Vigas/Columnas)", ["Tubos Estructurales (Hierro)", "Vigas de Concreto Vaciado"])
 tipo_techo = st.sidebar.selectbox("Tipo de Cobertura", ["Acerolit / Zinc", "Platabanda (Losa de Concreto)"])
 n_banos = st.sidebar.number_input("Número de Baños", min_value=0, value=1)
 
@@ -39,10 +39,12 @@ hierro_extra = 0
 tubos_extra = 0
 
 if tipo_estructura == "Vigas de Concreto Vaciado":
-    cem_extra += round(perimetro * 0.6) # Vigas de corona fuertes
-    hierro_extra += round(perimetro * 0.8) # Cabillas para vigas
+    # Cálculo para vigas de corona y riostras
+    cem_extra += round(perimetro * 0.6) 
+    hierro_extra += round(perimetro * 0.8) 
 else:
-    tubos_extra += round(perimetro / 2) # Correas de hierro
+    # Cálculo para correas de hierro
+    tubos_extra += round(perimetro / 2) 
 
 # 3. Techo Seleccionado
 costo_techo_mat = 0
@@ -51,7 +53,7 @@ if tipo_techo == "Platabanda (Losa de Concreto)":
     hierro_extra += round(area_piso / 2)
     costo_techo_mat = area_piso * 15 # Malla truck, puntales, etc.
 else:
-    costo_techo_mat = (area_piso * 1.2) / 3 * p_techo_lam
+    costo_techo_mat = area_piso * p_techo_lam
 
 # --- PANTALLA PRINCIPAL ---
 col1, col2 = st.columns(2)
@@ -84,4 +86,3 @@ with st.expander("🔍 Detalle de la Configuración Seleccionada"):
     st.write(f"*Estructura:* Has seleccionado {tipo_estructura}. Esto ajusta la cantidad de cemento y acero.")
     st.write(f"*Techo:* El presupuesto para {tipo_techo} incluye materiales base para su instalación.")
     st.write(f"*Electricidad:* Se estima un kit básico de tubería y cableado para {area_piso} m2.")
-    [attachment_0](attachment)
