@@ -81,4 +81,4 @@ with c1:
             st.write(f"*Tubos Estructurales {medida_tubo}:* {total_tubos} piezas")
 
     with st.expander("🧱 Paredes y Acabados"):
-    st.write(f"**Bloques de 15cm:**{bloques_total}unidades")
+         st.write(f"**Bloques de 15cm:**{bloques_total} unidades")
