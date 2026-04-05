@@ -1,97 +1,70 @@
-
 import streamlit as st
-import math
 
-# Configuración de la App
-st.set_page_config(page_title="Cerebro de Obra Detallado", page_icon="🏗️")
+st.set_page_config(page_title="Cerebro de Obra TOTAL - Adrián Yépez", layout="wide")
 
-st.title("🏗️ Cómputos Métricos Detallados PRO")
-st.markdown("### Adrián Yépez - Experto en Construcción")
-st.write("---")
+st.title("🏗️ Cerebro de Obra: Presupuesto Global con Plomería")
+st.write("Desde la fundación hasta las piezas sanitarias y acabados.")
 
-# --- PANEL DE CONTROL ---
-st.sidebar.header("📏 Dimensiones y Diseño")
-largo = st.sidebar.number_input("Largo (m)", value=10.0)
-ancho = st.sidebar.number_input("Ancho (m)", value=6.0)
-alto = st.sidebar.number_input("Altura de Paredes (m)", value=2.7)
+# --- BARRA LATERAL: MEDIDAS, PUNTOS Y PRECIOS ---
+st.sidebar.header("📏 Medidas y Puntos")
+largo = st.sidebar.number_input("Largo (m)", min_value=1.0, value=6.0)
+ancho = st.sidebar.number_input("Ancho (m)", min_value=1.0, value=4.0)
+alto = st.sidebar.number_input("Alto Pared (m)", min_value=1.0, value=2.6)
+n_puertas = st.sidebar.number_input("Puertas", min_value=0, value=1)
+n_ventanas = st.sidebar.number_input("Ventanas", min_value=0, value=2)
+n_banos = st.sidebar.number_input("Número de Baños", min_value=0, value=1)
 
-st.sidebar.header("🚪 Aberturas (Puntos Huecos)")
-n_puertas = st.sidebar.number_input("Puertas", value=2)
-n_ventanas = st.sidebar.number_input("Ventanas", value=3)
+st.sidebar.header("💰 Precios Actuales ($)")
+p_cemento = st.sidebar.number_input("Saco Cemento", value=8.0)
+p_bloque = st.sidebar.number_input("Bloque 15cm", value=0.60)
+p_tubo_est = st.sidebar.number_input("Tubo Estructural (6m)", value=25.0)
+p_techo = st.sidebar.number_input("Lámina Techo (3.6m)", value=18.0)
+p_combo_bano = st.sidebar.number_input("Combo Poceta/Lavamanos", value=120.0)
+p_tuberia_plom = st.sidebar.number_input("Kit Tubería por Baño", value=60.0)
 
-# --- LÓGICA DE CÁLCULO POR PARTIDAS ---
-perimetro = (largo + ancho) * 2
+# --- CÁLCULOS TÉCNICOS ---
 area_piso = largo * ancho
-num_columnas = math.ceil(perimetro / 3) + 1
-area_huecos = (n_puertas * 2.1) + (n_ventanas * 1.5)
-area_pared_neta = (perimetro * alto) - area_huecos
+perimetro = (largo + ancho) * 2
+area_paredes = (perimetro * alto) - (n_puertas * 2.1) - (n_ventanas * 1.5)
 
-# 1. FUNDACIONES (Zapatas de 0.60x0.60x0.60)
-vol_fundaciones = num_columnas * (0.6 * 0.6 * 0.6)
-cem_fund = math.ceil(vol_fundaciones * 7) # 7 sacos por m3
-arena_fund = round(vol_fundaciones * 0.5, 2)
-piedra_fund = round(vol_fundaciones * 0.8, 2)
-hierro_fund = num_columnas * 4.5 # Metros de cabilla 1/2 por zapata
+# 1. Albañilería
+total_bloques = round(area_paredes * 12.5)
+cem_total = round((perimetro * 0.8) + (total_bloques / 45) + (area_piso * 0.15))
 
-# 2. COLUMNAS Y VIGAS (Riostra y Corona)
-ml_vigas = perimetro * 2
-ml_total_concreto = ml_vigas + (num_columnas * alto)
-vol_concreto_estruc = ml_total_concreto * (0.15 * 0.20) # Sección 15x20
-cem_estruc = math.ceil(vol_concreto_estruc * 8.5)
-arena_estruc = round(vol_concreto_estruc * 0.5, 2)
-piedra_estruc = round(vol_concreto_estruc * 0.8, 2)
-hierro_12_estruc = ml_total_concreto * 4 # 4 pelos
+# 2. Techo
+area_techo = (largo + 0.5) * (ancho + 0.5)
+n_laminas = round(area_techo / 3)
+n_tubos = round((largo / 1.0) * (ancho / 6) + (ancho * 2 / 6))
 
-# 3. ALBAÑILERÍA (Bloques y Pega)
-bloques = math.ceil(area_pared_neta * 13)
-cem_pega = math.ceil(bloques / 45) # 1 saco de cemento para pegar 45-50 bloques
-arena_pega = round(area_pared_neta * 0.04, 2)
+# 3. Plomería y Piezas Sanitarias
+costo_piezas = n_banos * p_combo_bano
+costo_tuberia_bano = n_banos * p_tuberia_plom
 
-# 4. PISOS (Losa de 10cm y Sobrepiso)
-vol_losa = area_piso * 0.10
-cem_losa = math.ceil(vol_losa * 7)
-arena_losa = round(vol_losa * 0.5, 2)
-piedra_losa = round(vol_losa * 0.8, 2)
+# --- PANTALLA PRINCIPAL ---
+col1, col2 = st.columns(2)
 
-# --- INTERFAZ DE RESULTADOS ---
-if st.button("🚀 GENERAR REPORTE DETALLADO"):
+with col1:
+    st.header("📋 Lista de Materiales")
+    st.info(f"🧱 *Albañilería:* {total_bloques} bloques, {cem_total} sacos cemento.")
+    st.info(f"🏠 *Techo:* {n_laminas} láminas, {n_tubos} tubos estructurales.")
+    st.info(f"🚿 *Plomería:* {n_banos} Kit(s) de piezas sanitarias y tuberías.")
+    st.info(f"⚡ *Electricidad:* Incluye cableado y mangueras para {area_piso} m2.")
+
+with col2:
+    st.header("💵 Presupuesto Estimado ($)")
+    c_gris = (total_bloques * p_bloque) + (cem_total * p_cemento)
+    c_techo = (n_laminas * p_techo) + (n_tubos * p_tubo_est)
+    c_plomeria = costo_piezas + costo_tuberia_bano
     
-    st.subheader("📋 Detalle por Etapa")
+    st.write(f"Materiales Base: *${c_gris:.2f}*")
+    st.write(f"Techo y Estructura: *${c_techo:.2f}*")
+    st.write(f"Baños y Plomería: *${c_plomeria:.2f}*")
     
-    with st.expander("🛠️ 1. Fundaciones y Zapatas"):
-        st.write(f"• *Cemento:* {cem_fund} sacos")
-        st.write(f"• *Arena Lavada:* {arena_fund} m³")
-        st.write(f"• *Piedra Picada:* {piedra_fund} m³")
-        st.write(f"• *Cabilla 1/2:* {math.ceil(hierro_fund)} m")
+    total = c_gris + c_techo + c_plomeria + 150 # 150 de extras (pintura/elec base)
+    st.success(f"### TOTAL ESTIMADO: ${total:.2f}")
 
-    with st.expander("🏗️ 2. Columnas y Vigas (Riostra/Corona)"):
-        st.write(f"• *Cemento:* {cem_estruc} sacos")
-        st.write(f"• *Arena Lavada:* {arena_estruc} m³")
-        st.write(f"• *Piedra Picada:* {piedra_estruc} m³")
-        st.write(f"• *Cabilla 1/2:* {math.ceil(hierro_12_estruc)} m")
-
-    with st.expander("🧱 3. Paredes (Albañilería)"):
-        st.write(f"• *Bloques 15cm:* {bloques} unidades")
-        st.write(f"• *Cemento (Pega):* {cem_pega} sacos")
-        st.write(f"• *Arena:* {arena_pega} m³")
-
-    with st.expander("👣 4. Losa de Piso"):
-        st.write(f"• *Cemento:* {cem_losa} sacos")
-        st.write(f"• *Arena Lavada:* {arena_losa} m³")
-        st.write(f"• *Piedra Picada:* {piedra_losa} m³")
-
-    # --- GRAN TOTAL TOTALIZADO ---
-    st.markdown("---")
-    st.header("🛒 LISTA DE COMPRA TOTAL")
-    
-    tot_cem = cem_fund + cem_estruc + cem_pega + cem_losa
-    tot_arena = arena_fund + arena_estruc + arena_pega + arena_losa
-    tot_piedra = piedra_fund + piedra_estruc + piedra_losa
-    tot_hierro = math.ceil((hierro_fund + hierro_12_estruc) / 6) # En tubos de 6m
-    
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Cemento", f"{tot_cem} Sacos")
-    c2.metric("Arena Lavada", f"{tot_arena} m³")
-    c3.metric("Piedra Picada", f"{tot_piedra} m³")
-    
-    st.info(f"💡 Necesitarás aproximadamente *{tot_hierro} cabillas de 1/2\"* (de 6 metros cada una).")
+with st.expander("🔍 Detalle de Aguas Blancas y Negras"):
+    st.write(f"*Aguas Negras:* Incluye tubería de 4\" para descarga de poceta y 2\" para desagües.")
+    st.write(f"*Aguas Blancas:* Tubería de 1/2\" termofusión o PVC con sus llaves de paso.")
+    st.write(f"*Piezas:* {n_banos} Poceta(s), {n_banos} Lavamanos y {n_banos} Kit(s) de ducha.")
+    [attachment_0](attachment)
